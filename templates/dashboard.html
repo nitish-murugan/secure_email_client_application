@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% block title %} Dashboard {% endblock %}
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+{% block style %}
+<style>
+    body {
+        position: relative;
+    }
+    
+    /* Flexbox container for chart and sliding box */
+    .chart-and-names-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .chart-container {
+        width: 600px;
+        height: 400px;
+        margin-top: 30px;
+    }
+    
+    /* Style the sliding names box */
+    .names-box {
+        width: 250px;
+        height: 400px;
+        overflow: hidden;
+        border: 1px solid #ccc;
+        margin-left: 20px;
+        position: relative;
+        background-color: #f9f9f9;
+        padding: 10px;
+    }
+    
+    .names-list {
+        position: absolute;
+        width: 100%;
+        animation: slideNames 10s linear infinite;
+    }
+    
+    .name-item {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    @keyframes slideNames {
+        0% {
+            top: 0;
+        }
+        100% {
+            top: -100%;
+        }
+    }
+    
+    .names-box {
+        margin-left: auto;
+        margin-right: 110px;
+        width: 400px;
+        height: 280px;
+        margin-top: 30px;
+    }
+    
+    .chart-container {
+        margin-left: 50px;
+    }
+    
+    .Text1 {
+        font-size: 20px;
+        color: #4a4a4a;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-top: 30px;
+        margin-left: 3rem;
+        display: flex;
+        gap: 24rem;
+        align-items: center;
+    }
+
+    .Text1 h4{
+        font-size : 20px;
+    }
+    
+    .ProfileTitle {
+        margin-top: 30px;
+    }
+    
+    .ProfileTitle h3 {
+        font-size: 24px;
+        color: #4a4a4a;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    /* Adjusted studentProfile container to fix shrinking issue */
+    .studentProfile {
+        margin-top: 20px;
+        margin-left: 3rem;
+        display: flex;
+        justify-content: space-between; /* Space between content and image */
+        width: 90%; /* Adjust width to suit content */
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Image styling to prevent it from affecting the content */
+    .studentProfile img {
+        margin-left: 0px;
+        margin-right: 50px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        border: 2px solid #4a4a4a;
+        width: 150px;
+        height: 150px;
+    }
+    
+    .profileContent {
+        flex-grow: 1; /* Allow content to take up available space */
+        margin-left: 50px;
+    }
+    
+    .profileContent h4 {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+        font-weight: bold;
+    }
+    
+    .profileContent table td {
+        padding: 10px 0;
+        font-size: 16px;
+        color: #555;
+    }
+    
+    .profileContent table h4 {
+        font-size: 16px;
+        font-weight: normal;
+        color: #666;
+    }
+    
+    /* General table styling */
+    table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0 15px;
+    }
+    
+    td {
+        padding: 1px;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+    
+
+</style>
+{% endblock %}
+{% block body %}
+    
+    <script type="text/javascript">
+        var fetchedData = {};
+        $(document).ready(function() {
+            // Automatically make the AJAX request when the page loads
+            $.ajax({
+                url: '/getData',
+                method: 'GET',
+                success: function(response) {
+                    fetchedData = response;
+                    document.getElementById('displayImage').src = 'data:image/jpeg;base64,' + fetchedData.imageData || 'Unknown';
+                    document.getElementById('name').innerText = fetchedData.personalDetails[0];
+                    document.getElementById('rollNumber').innerText = fetchedData.personalDetails[1];
+                    document.getElementById('mailID').innerText = fetchedData.personalDetails[2];
+                    document.getElementById('dept').innerText = fetchedData.personalDetails[3];
+                    document.getElementById('sec').innerText = fetchedData.personalDetails[4];
+                    document.getElementById('phone').innerText = fetchedData.personalDetails[5];
+                    document.getElementById('dob').innerText = fetchedData.personalDetails[6];
+                    document.getElementById('addr').innerText = fetchedData.personalDetails[7];
+                    alert("Ok")
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                    alert("Error")
+                }
+            });
+        });
+    </script>
+{% endblock  %}
+{% block body2 %}
+
+    <div class="ProfileTitle" style="margin-left: 50px;">
+        <h3> <u> <i> Student Profile </u> </i> </h3>
+    </div>
+    <div class="studentProfile">
+        <div class="profileContent">
+            <table style="width:100%; table-layout: fixed; border-collapse: separate; border-spacing: 0 15px;">
+                <tr>
+                    <td style="width: 30%;"> <h4>Name</h4> </td>
+                    <td style="width: 40%;"> <h4> <span id='name'></span> </h4> </td>
+                </tr>
+                <tr>
+                    <td style="width: 30%;"> <h4>Roll number</h4> </td>
+                    <td style="width: 40%;"> <h4> <span id='rollNumber'></span> </h4> </td>
+                </tr>
+                <tr>
+                    <td style="width: 30%;"> <h4>Mail ID</h4> </td>
+                    <td style="width: 40%;"> <h4> <span id='mailID'></span> </h4> </td>
+                </tr>
+                <tr>
+                    <td style="width: 30%;"> <h4>Department</h4> </td>
+                    <td style="width: 40%;"> <h4> <span id='dept'></span> </h4> </td>
+                </tr>
+                <tr>
+                    <td style="width: 30%;"> <h4>Section</h4> </td>
+                    <td style="width: 40%;"> <h4> <span id='sec'></span> </h4> </td>
+                </tr>
+                <tr>
+                    <td style="width: 30%;"> <h4>Phone number</h4> </td>
+                    <td style="width: 40%;"> <h4>+91 <span id='phone'></span> </h4> </td>
+                </tr>
+                <tr>
+                    <td style="width: 30%;"> <h4>Date of Birth</h4> </td>
+                    <td style="width: 40%;"> <h4> <span id='dob'></span> </h4> </td>
+                </tr>
+                <tr>
+                    <td style="width: 30%;"> <h4>Residential Address</h4> </td>
+                    <td style="width: 40%; word-wrap: break-word;"> <h4> <span id='addr'></span> </h4> </td>
+                </tr>
+            </table>
+        </div>
+        
+        <img id="displayImage" src="" alt="Embedded Image" width="150px" height="150px"/>
+        
+    </div>
+    <br>
+    <div class = "Text1">
+        <h4> <u> <i> Activities last few months </u> </i> </h4>
+        <h4> <u> <i> Recent extra-curricular activities </u> </i> </h4>
+    </div>
+
+    <div class="chart-and-names-container">
+        <!-- Bar Chart -->
+         
+        <div class="chart-container">
+            <canvas id="myBarChart"></canvas>
+        </div>
+ 
+        <!-- Sliding names box -->
+        <div class="names-box">
+            
+            <div class="names-list" id="namesList"></div>
+        </div>
+
+    </div>
+
+    
+   
+
+<script>
+    // Data for the chart
+    var labels = {{ labels|tojson }};
+    var values = {{ values|tojson }};
+
+    var ctx = document.getElementById('myBarChart').getContext('2d');
+    var myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Last two months',
+                data: values,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Example random names array
+    var names = {{eventsDate | tojson}};
+
+    // Populate the names list with 15 names
+    function populateNames() {
+        const namesList = document.getElementById('namesList');
+        namesList.innerHTML = '';  // Clear any existing content
+
+        for (let i = 0; i < names.length; i++) {
+            let nameItem = document.createElement('div');
+            nameItem.classList.add('name-item');
+            nameItem.textContent = names[i];
+            namesList.appendChild(nameItem);
+        }
+    }
+
+    // Call the function to populate names on page load
+    populateNames();
+</script>
+
+
+{% endblock %}

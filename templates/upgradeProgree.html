@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %} Upgrade your progress {% endblock  %}
+{% block style %}
+.search-bar-container {
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-top: 65px;    
+    position: relative;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .top-right-button {
+    position: absolute;
+    top: 80px; /* Adjust the distance from the top of the container */
+    right: 10px; /* Adjust the distance from the right side of the container */
+    padding: 10px 15px;
+    background-color: #28a745; /* Green color */
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  
+  .top-right-button:hover {
+    background-color: #218838; /* Darker green on hover */
+  }
+  
+  .search-bar {
+    display: flex;
+    align-items: center;
+    
+  }
+  
+  .search-bar input,
+  .search-bar select,
+  .search-bar button {
+    height: 40px; /* Set uniform height */
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 5px;
+  }
+  
+  .search-bar input[type="date"] {
+    width: 150px; /* Reduced width for date inputs */
+    margin-right: 10px;
+  }
+  
+  .search-bar input[type="text"] {
+    flex-grow: 1;
+    margin-right: 10px;
+  }
+  
+  .search-bar select {
+    margin-right: 10px;
+  }
+  
+  .search-bar button {
+    padding: 0 15px;
+    background-color: #007bff; /* Blue color */
+    color: #fff;
+    cursor: pointer;
+    border: none;
+  }
+  
+  .search-bar button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+  }
+
+  .results-table-container {
+    margin: 10px;
+    border: 1px solid #ccc;
+  }
+  
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .results-table thead {
+    background-color: #f9f9f9;
+  }
+  
+  .results-table th, .results-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .results-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  
+  /* Pagination Styling */
+  .pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 10px;
+  }
+  
+  .pagination button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: 5px;
+  }
+  
+  .pagination button:hover {
+    background-color: #0056b3;
+  }
+  
+  .pagination span {
+    margin: 0 10px;
+  }
+  
+{% endblock  %}
+{% block body2 %}
+<script>
+  $(document).ready(function() {
+    // Handle form submission via AJAX
+    $('#searchForm').on('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        $.ajax({
+            url: '/searchData',  // Flask route for handling the search
+            method: 'POST',
+            data: $(this).serialize(),  // Serialize form data
+            success: function(response) {
+                
+                var tableBody = $('.results-table tbody');
+                tableBody.empty();  // Clear the table before adding new rows
+
+                // Populate table with fetched data
+                if (response.details.length > 0) {
+                    response.details.forEach(function(item, index) {
+                        var rowHtml = `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${item.date}</td>
+                                <td>${item.eventSpec+" - "+item.eventName}</td>
+                                <td>${item.venue + " - " + item.location}</td>
+                                <td>${item.prize}</td>
+                                <td>
+                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown"> </button>
+                                <ul class="dropdown-menu">
+                                    <li> <a href="#" class="dropdown-item" data-image-id='${item.id}' onclick="downloadImage(${item.id})"> Download certificate </a> </li>
+                                </ul> </td>
+                            </tr>
+                        `;
+                        tableBody.append(rowHtml);  // Append each row to the table
+                    });
+                } else {
+                    var noDataHtml = `
+                        <tr>
+                            <td colspan="5" style="text-align: center;">No results found</td>
+                        </tr>
+                    `;
+                    tableBody.append(noDataHtml);  // Show no data message
+                }
+            },
+            error: function(error) {
+                console.error('Error:', error);
+                alert('Error fetching data. Please try again.');
+            }
+        });
+    });
+  });
+</script>
+
+<script>
+  function downloadImage(imageId) {
+    window.location.href = '/downloadCertificate/' + imageId; // Redirect to the image download route
+}
+</script>
+
+
+
+<a href="/addRecords"><button class="top-right-button">Add records</button></a> 
+<div class="search-bar-container">
+  
+  <form id="searchForm">
+    <div class="search-bar">
+      <input type="date" name="fromDate" placeholder="From Date">
+      <input type="date" name="toDate" placeholder="To Date">
+      <input type="text" name="particulars" placeholder="Content Search">
+      <select name="location">
+        <option value="outside">Outside</option>
+        <option value="inside">Inside</option>
+      </select>
+      <select name="specificEvent">
+        <option value="none"> Select any one </option>
+        <option value="option1">Paper presentation</option>
+        <option value="option2">Project expo</option>
+        <option value="option3">Workshops</option>
+        <option value="option4">Technical Events</option>
+        <option value="option5">Sports & Games</option>
+        <option value="option6">Membership</option>
+        <option value="option7">Leadership & Organizing Events</option>
+        <option value="option8">Patent or Copyrights</option>
+        <option value="option9">Online courses</option>
+        <option value="option10">Placement / Internship</option>
+      </select>
+      <button type="submit">Search</button>
+    </div>
+  </form>
+</div>
+<div class="results-table-container">
+    <table class="results-table" style="width:100%; table-layout: fixed; border-collapse: separate; border-spacing: 0 5px;">
+        <thead>
+          <tr>
+            <th style="width: 10%;">S.No</th>
+            <th style="width: 10%;">Event Date</th>
+            <th style="width: 40%;">Description</th>
+            <th style="width: 20%;">Venue</th>
+            <th style="width: 10%;">Prize Won</th>
+            <th style="width: 10%;">Action </th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        </tbody>
+      </table>
+      
+    <div class="pagination">
+      <button class="prev-btn">◄</button>
+      <span>Showing 1-50</span>
+      <button class="next-btn">►</button>
+    </div>
+  </div>
+
+{% endblock  %}

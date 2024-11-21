@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% block title %} Courses {% endblock %}
+{% block style %}
+.search-bar-container {
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-top: 65px;    
+    position: relative;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.top-right-button {
+    position: absolute;
+    top: 80px;
+    right: 10px;
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.top-right-button:hover {
+    background-color: #218838;
+}
+
+.search-bar, #additional-filters, #additional-filters2 {
+    display: flex;
+    align-items: center;
+}
+
+.search-bar input,
+.search-bar select,
+.search-bar button,
+#additional-filters input,
+#additional-filters select,
+#additional-filters2 input,
+#additional-filters2 select {
+    height: 40px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 5px;
+    margin-right: 10px;
+}
+
+.search-bar input[type="date"], 
+#additional-filters input[type="date"],
+#additional-filters2 input[type="date"] {
+    width: 150px;
+}
+
+.search-bar input[type="text"], 
+#additional-filters input[type="text"],
+#additional-filters2 input[type="text"] {
+    flex-grow: 1;
+}
+
+.search-bar select, 
+#additional-filters select,
+#additional-filters2 select {
+    margin-right: 10px;
+}
+
+.search-bar button {
+    padding: 0 15px;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+}
+
+.search-bar button:hover {
+    background-color: #0056b3;
+}
+
+/* Initially hide the additional filters */
+#additional-filters {
+    display: none;
+    margin-top: 10px;
+}
+
+#additional-filters2 {
+    margin-top: 15px;
+}
+
+/* Style for the "Show more" link */
+.show-more-link {
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-left: 1150px;
+    margin-top: 100px;
+}
+
+.show-more-link:hover {
+    color: #0056b3;
+}
+
+.results-table-container {
+    margin: 10px;
+    border: 1px solid #ccc;
+  }
+  
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .results-table thead {
+    background-color: #f9f9f9;
+  }
+  
+  .results-table th, .results-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .results-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  
+  /* Pagination Styling */
+  .pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 10px;
+  }
+  
+  .pagination button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: 5px;
+  }
+  
+  .pagination button:hover {
+    background-color: #0056b3;
+  }
+  
+  .pagination span {
+    margin: 0 10px;
+  }
+  
+{% endblock %}
+
+{% block body2 %}
+
+<script>
+    $(document).ready(function() {
+      // Handle form submission via AJAX
+      $('#searchForm').on('submit', function(event) {
+          event.preventDefault(); // Prevent the default form submission
+  
+          $.ajax({
+              url: '/searchCourses',  // Flask route for handling the search
+              method: 'POST',
+              data: $(this).serialize(),  // Serialize form data
+              success: function(response) {
+                  
+                  var tableBody = $('.results-table tbody');
+                  tableBody.empty();  // Clear the table before adding new rows
+  
+                  // Populate table with fetched data
+                  if (response.details.length > 0) {
+                      response.details.forEach(function(item, index) {
+                          var rowHtml = `
+                              <tr>
+                                  <td style="text-align: center;">${index + 1}</td>
+                                  <td style="text-align: center;">${item[6]}</td>
+                                  <td style="text-align: center;">${item[0]}</td>
+                                  <td style="text-align: center;">${item[1]}</td>
+                                  <td style="text-align: center;">${item[2]}</td>
+                                  <td style="text-align: center;">${item[3]}</td>
+                                  <td style="text-align: center;">${item[4]}</td>
+                                  <td style="text-align: center;">
+                                      <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown"> </button>
+                                      <ul class="dropdown-menu">
+                                          <li> <a href="#" class="dropdown-item" data-image-id='${item[5]}' onclick="downloadImage(${item[5]})"> Download certificate </a> </li>
+                                      </ul>
+                                  </td>
+                              </tr>
+                          `;
+                          tableBody.append(rowHtml);  // Append each row to the table
+                          fetchPaginationData();
+                      });
+                  } else {
+                      var noDataHtml = `
+                          <tr>
+                              <td colspan="7" style="text-align: center;">No results found</td>
+                          </tr>
+                      `;
+                      tableBody.append(noDataHtml);  // Show no data message
+                  }
+              },
+              error: function(error) {
+                  console.error('Error:', error);
+                  alert('Error fetching data. Please try again.');
+              }
+          });
+      });
+
+      function fetchPaginationData() {
+        $.ajax({
+            url: '/getPaginationData',  // Flask route to get pagination data
+            method: 'POST',
+            success: function(response) {
+                var currentPage = response.current_page;
+                var itemsPerPage = response.items_per_page;
+                var totalItems = response.total_items;
+
+                // Calculate the range of items to display
+                var startItem = (currentPage - 1) * itemsPerPage + 1;
+                var endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+                // Update the pagination span
+                $('#page-info').text(`Showing ${startItem}-${endItem}`);
+            },
+            error: function(error) {
+                console.error('Error:', error);
+                alert('Error fetching pagination data.');
+            }
+        });
+    }
+    });
+</script>
+
+<script>
+    function downloadImage(imageId) {
+      window.location.href = '/download/' + imageId; // Redirect to the image download route
+  }
+  </script>
+
+<a href="/certificateUpload"><button class="top-right-button">Add records</button></a> 
+<div class="search-bar-container">
+  
+  <form id="searchForm">
+    <div class="search-bar">
+        <select name="platform">
+            <option value="none" disabled selected>Select the platform</option>
+            <option value="Udemy">Udemy</option>
+            <option value="Teachable">Teachable</option>
+            <option value="Thinkific">Thinkific</option>
+            <option value="Coursera">Coursera</option>
+            <option value="edX">edX</option>
+            <option value="Kajabi">Kajabi</option>
+            <option value="Skillshare">Skillshare</option>
+            <option value="Podia">Podia</option>
+            <option value="WizIQ">WizIQ</option>
+            <option value="LearnWorlds">LearnWorlds</option>
+            <option value="LinkedIn Learning">LinkedIn Learning</option>
+            <option value="Pluralsight">Pluralsight</option>
+            <option value="Great learning">Great learning</option>
+            <option value="FutureLearn">FutureLearn</option>
+            <option value="OpenLearning">OpenLearning</option>
+            <option value="Simplilearn">Simplilearn</option>
+            <option value="Skillshare">Skillshare</option>
+            <option value="Ruzuku">Ruzuku</option>
+            <option value="Mighty Networks">Mighty Networks</option>
+            <option value="Pathwright">Pathwright</option>
+            <option value="Others">Others</option>
+
+        </select>
+
+        <select name="certificationType">
+            <option value="none" disabled selected> Certification type </option>
+            <option value="Professional">Professional Certifications</option>
+            <option value="Academic">Academic Certifications</option>
+            <option value="Online course">Online Course Certifications</option>
+            <option value="Completion">Certification of Completion</option>
+            <option value="Other">Others</option>
+        </select>
+        
+      <input type="text" name="particulars" placeholder="Content Search">
+
+      <select name="freePaid">
+        <option value="none" disabled selected> Free / Paid</option>
+        <option value="Free">Free</option>
+        <option value="Paid">Paid</option>
+        <option value="Both">Both</option>
+      </select>
+
+      <select name="year">
+        <option value="none" disabled selected> Study year</option>
+        <option value="1st">1st Year</option>
+        <option value="2nd">2nd Year</option>
+        <option value="3rd">3rd Year</option>
+        <option value="4th">4th Year</option>
+      </select>
+
+      <button type="submit">Search</button>
+    </div>
+
+    <div id="additional-filters">
+        <hr>
+        <select name="section">
+            <option value="none" disabled selected> Section</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+        </select>
+
+        <select name="semester">
+            <option value="none" disabled selected> Semester</option>
+            <option value="I">I</option>
+            <option value="II">II</option>
+            <option value="III">III</option>
+            <option value="IV">IV</option>
+            <option value="V">V</option>
+            <option value="VI">VI</option>
+            <option value="VII">VII</option>
+            <option value="VIII">VIII</option>
+
+        </select>
+
+        <select name="courseType">
+            <option value="none" disabled selected> Course type</option>
+            <option value="Programming">Computer Programming</option>
+            <option value="Web Development">Web Development</option>
+            <option value="Data Science">Data Science and Analytics</option>
+            <option value="Cyber Security">Cybersecurity</option>
+            <option value="Cloud Computing">Cloud Computing</option>
+            <option value="Mobile App Development">Mobile App Development</option>
+            <option value="Networking">Networking</option>
+            <option value="AIML">Artificial Intelligence and Machine Learning</option>
+            <option value="Database Management">Database Management</option>
+            <option value="Software Engineering">Software Engineering</option>
+        </select>
+
+        <select name="duration">
+            <option value="none" disabled selected> Duration</option>
+            <option value="Less than a month">Less than a month</option>
+            <option value="One Month">1 months</option>
+            <option value="Two Month">2 months</option>
+            <option value="Three Month">3 months</option>
+            <option value="Six Month">6 months</option>
+            <option value="More than 6 months">More than 6 months</option>
+        </select>
+        <label style="margin-right: 10px;"> From Date  </label>
+        <input type="date" name="fromDate" placeholder="From Date">
+        <label style="margin-right: 10px;"> To Date  </label>
+        <input type="date" name="toDate" placeholder="To Date">
+
+        <div id="additional-filters2">
+            
+        </div>
+    </div>
+    
+    <!-- "Show more" link -->
+    <a class="show-more-link" onclick="showMoreFilters()">Show more</a>
+  </form>
+</div>
+
+<div class="results-table-container">
+    <table class="results-table" style="width:100%; table-layout: fixed; border-collapse: separate; border-spacing: 0 5px;">
+        <thead>
+            <tr>
+                <th style="width: 5%; text-align: center;">S.No</th>
+                <th style="width: 10%; text-align: center;">Roll Number</th>
+                <th style="width: 15%; text-align: center;">Student Name</th>
+                <th style="width: 10%; text-align: center;">Study Year</th>
+                <th style="width: 10%; text-align: center;">Platform</th>
+                <th style="width: 30%; text-align: center;">Course Type</th>
+                <th style="width: 10%; text-align: center;">Duration</th>
+                <th style="width: 10%; text-align: center;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Add your data rows here -->
+        </tbody>
+    </table>
+    
+    <div class="pagination" style="text-align: center; margin-top: 10px;">
+        <a href="/downloadExcel" style="margin-right: 10px;"> <img src="{{ url_for('static', filename='excel.png') }}" alt="image" width="20px" height="20px" style="margin-right: 8px;">Download in Excel </a>
+        <button class="prev-btn">◄</button>
+        <span id="page-info">Showing 1-50</span>
+        <button class="next-btn">►</button>
+    </div>
+</div>
+
+
+
+<script>
+// JavaScript function to show additional filters
+function showMoreFilters() {
+    var additionalFilters = document.getElementById("additional-filters");
+  var showMoreLink = document.querySelector('.show-more-link');
+  
+  if (additionalFilters.style.display === "none" || additionalFilters.style.display === "") {
+    additionalFilters.style.display = "block";
+    showMoreLink.textContent = "Show less"; 
+  } else {
+    additionalFilters.style.display = "none";
+    showMoreLink.textContent = "Show more"; 
+  }
+}
+</script>
+
+{% endblock %}

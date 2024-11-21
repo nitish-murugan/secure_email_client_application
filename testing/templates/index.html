@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask and AJAX</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>AJAX Example</h1>
+
+    <!-- Placeholders for dynamic content -->
+    <p id="userName">Loading Name...</p>
+    <p id="userAge">Loading Age...</p>
+
+    <!-- Script to fetch data -->
+    <script type="text/javascript">
+        var fetchedData = {};
+
+        $(document).ready(function() {
+            // Make the AJAX request when the page loads
+            $.ajax({
+                url: '/get_data',
+                method: 'GET',
+                success: function(response) {
+                    fetchedData = response;  // Store the data globally
+                    // Inject the data into HTML elements
+                    document.getElementById('userName').innerText = 'Name: ' + response.name;
+                    document.getElementById('userAge').innerText = 'Age: ' + response.age;
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+    </script>
+
+    <!-- Now you can reference the placeholders outside the script -->
+    <p>Additional content about <span id="userNameOutside"></span> and their age: <span id="userAgeOutside"></span>.</p>
+
+    <script>
+        // Access the data outside the original AJAX call
+        setTimeout(function() {
+            // Use the same data outside the script for other purposes
+            document.getElementById('userNameOutside').innerText = fetchedData.name || 'Unknown';
+            document.getElementById('userAgeOutside').innerText = fetchedData.age || 'Unknown';
+        }, 500);  // Delay to ensure AJAX call has completed
+    </script>
+</body>
+</html>
